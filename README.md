@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GATE 2027 Study Tracker — competitive edition
 
-## Getting Started
+A full-stack rebuild of the single-page GATE tracker: real accounts, cloud-saved progress,
+the complete **CSE** and **EE/ECE** GATE 2027 syllabi, and a daily competition leaderboard.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 14** (App Router, server components) + TypeScript + Tailwind
+- **Prisma** — SQLite for local dev, one-line switch to Postgres for deploy
+- **Own auth** — email + password (bcrypt) with an HTTP-only JWT session cookie
+- framer-motion, recharts, lucide-react
+
+## Routes
+
+| Route | What it does |
+| --- | --- |
+| `/` | Public landing page with a live "top 3 today" preview |
+| `/auth` | Sign up (name, avatar, colour, branch) or sign in — no email confirmation |
+| `/dashboard` | Streak, progress ring, daily task set, session logger, focus timer, insights, syllabus accordion |
+| `/compete` | Today / week / all-time leaderboards, branch filter, "who's winning" banner, 14-day winners strip |
+| `/profile` | Edit name / avatar / colour / branch, personal stats, subject breakdown chart |
+
+## Scoring
+
+```
+daily score = topics × 10 + daily tasks × 5 + hours × 8 + 15 (if every daily task is done)
+streak      = consecutive days with a score > 0
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Scores are cached per user per day in `DailyScore` and recomputed on every mutation, so
+leaderboard reads are a single cheap query.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Data model
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`User`, `TopicProgress`, `DailyTaskDone`, `StudySession`, `DailyScore` (see `prisma/schema.prisma`).
+Syllabus content ships as typed constants in `src/data/` (not database rows) so topic ids stay stable.
+Every API route resolves the user from the session cookie and only ever reads or writes that user's
+rows; the leaderboard endpoint returns display name, avatar, branch, score and streak — never emails.
 
-## Learn More
+## Local setup
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cp .env.example .env      # set AUTH_SECRET to any long random string
+npm install
+npx prisma migrate dev    # creates prisma/dev.db
+npm run db:seed           # optional demo users
+npm run dev               # http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Seeded demo accounts (password `gate2027`): `krish@demo.dev`, `aarav@demo.dev` (CSE),
+`isha@demo.dev`, `dev@demo.dev` (ECE).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Set `provider = "postgresql"` in `prisma/schema.prisma`.
+2. Point `DATABASE_URL` at a hosted Postgres (Neon, Supabase, Railway…).
+3. Set `AUTH_SECRET` and optionally `NEXT_PUBLIC_APP_TIMEZONE` (defaults to `Asia/Kolkata`,
+   which decides when the "day" rolls over for streaks and daily scores).
+4. `npx prisma migrate deploy && npm run build`.
