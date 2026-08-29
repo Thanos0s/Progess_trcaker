@@ -1,12 +1,14 @@
-// Switch `provider` to "postgresql" (and point DATABASE_URL at your Postgres
-// instance) to deploy on a hosted database — no other change is required.
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Needed for Vercel serverless — generates lean query engine
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon/Supabase connection pooling (pgBouncer) requires directUrl for migrations
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
