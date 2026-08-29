@@ -2,26 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: 225 20% 6%;
+    --surface: 227 21% 10%;
+    --card: 228 21% 13%;
+    --border: 228 19% 19%;
+    --accent: 244 100% 70%;
+    --accent2: 165 100% 42%;
+    --warn: 38 91% 55%;
+    --danger: 0 100% 68%;
+    --text: 228 25% 93%;
+    --muted: 220 9% 55%;
+  }
+
+  html,
+  body {
+    @apply bg-bg text-text;
+  }
+
+  body {
+    font-family: var(--font-sans), sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: linear-gradient(hsl(var(--accent) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--accent) / 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.35);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-border bg-card/80 backdrop-blur-sm;
+  }
+
+  .panel-glow {
+    @apply panel shadow-glow;
+    border-color: hsl(var(--accent) / 0.5);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium
+      text-text transition hover:border-accent/60 hover:bg-card disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn border-transparent text-white;
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.7));
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium;
+  }
+
+  .label {
+    @apply font-mono text-[10px] uppercase tracking-[0.18em] text-muted;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text outline-none
+      transition placeholder:text-muted focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
 }
